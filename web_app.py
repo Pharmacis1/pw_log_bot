@@ -17,7 +17,7 @@ from consts import CLASSES
 
 
 app = FastAPI()
-app.mount("/icons", StaticFiles(directory="icon"), name="icons")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 DB_NAME = "clan_archive.db"
 
@@ -144,7 +144,7 @@ async def get_data_from_db(start_date: str = None, end_date: str = None, classes
         cid = data["class_id"]
         if cid in CLASSES:
             cname, cemoji, cshort = CLASSES[cid]
-            stats["class_icon"] = f"/icons/{cid}.png"
+            stats["class_icon"] = f"/static/icons/{cid}.png"
             stats["class_name"] = cname
         else:
             stats["class_icon"] = ""
@@ -196,7 +196,7 @@ async def read_root(request: Request, start: str = None, end: str = None, classe
     history_rows = []
     for date, name, cid, desc, etype, role_id in raw_history:
         # emoji = CLASSES.get(cid, ("", "", ""))[1] if cid is not None else ""
-        icon_url = f"/icons/{cid}.png" if cid is not None and cid in CLASSES else ""
+        icon_url = f"/static/icons/{cid}.png" if cid is not None and cid in CLASSES else ""
         cname = CLASSES[cid][0] if cid is not None and cid in CLASSES else ""
         history_rows.append((date, name, icon_url, cname, desc, etype, role_id))
     
@@ -209,7 +209,7 @@ async def read_root(request: Request, start: str = None, end: str = None, classe
         all_classes_list.append({
             "id": cid,
             "name": cname,
-            "icon": f"/icons/{cid}.png",
+            "icon": f"/static/icons/{cid}.png",
             "selected": (cid in classes) if classes else False
         })
     # Сортировка по ID

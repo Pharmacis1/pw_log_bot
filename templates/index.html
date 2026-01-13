@@ -610,7 +610,7 @@
         // Маппинг icon URL -> class_id
         const classIconMap = {
             {% for cid, cdata in CLASSES.items() %}
-        "/icons/{{ cid }}.png": { { cid } },
+        "/static/icons/{{ cid }}.png": { { cid } },
         {% endfor %}
         };
 
