@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+
+# Distribution / Packaging
+build/
+dist/
+*.spec
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3
+clan_archive.db
+
+# Environment Variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Project Specific
+watcher.ini

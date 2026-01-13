@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика Клана</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: var(--tg-theme-bg-color, #f8f9fa);
+            color: var(--tg-theme-text-color, #000);
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        /* Стили для верхней навигации */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+
+        .nav-link-custom {
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 15px;
+            color: var(--tg-theme-hint-color, #999);
+            border-bottom: 2px solid transparent;
+            padding-bottom: 2px;
+        }
+
+        .nav-link-custom.active {
+            color: var(--tg-theme-button-color, #3390ec);
+            border-bottom: 2px solid var(--tg-theme-button-color, #3390ec);
+        }
+
+        .last-update {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #999);
+            text-align: right;
+        }
+
+        .filter-card {
+            background: var(--tg-theme-secondary-bg-color, #fff);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .table-card {
+            background: var(--tg-theme-secondary-bg-color, #fff);
+            border-radius: 12px;
+            padding: 5px;
+            overflow: hidden;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--tg-theme-text-color, #000);
+            cursor: pointer;
+        }
+
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            background-color: var(--tg-theme-secondary-bg-color, #fff);
+        }
+
+        /* Цвета ячеек */
+        .stage-cell {
+            text-align: center;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .done {
+            color: #198754;
+            background-color: rgba(25, 135, 84, 0.1);
+        }
+
+        .dance {
+            color: #d63384;
+            background-color: rgba(214, 51, 132, 0.1);
+        }
+
+        .adept {
+            color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        .btn-preset {
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+
+        /* Цветовая кодировка событий истории */
+        .type-6 {
+            color: green;
+            font-weight: bold;
+        }
+
+        /* Вступил */
+        .type-8,
+        .type-10 {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Вышел / Изгнал */
+        .type-9 {
+            color: #d35400;
+        }
+
+        /* Должность */
+
+        table.dataTable thead th {
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .class-icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 4px;
+            object-fit: contain;
+        }
+
+        .dropdown-menu-custom {
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 250px;
+        }
+
+        .form-check-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Fix for Telegram Dark Mode */
+        .modal-content {
+            color: #000 !important;
+            /* Force black text on white modal */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+
+        <div class="top-nav d-flex justify-content-between align-items-center mb-1" style="padding: 0 4px;">
+            <div>
+                {#
+                <button type="button" class="btn btn-sm btn-success py-0" style="font-size: 0.75rem;"
+                    data-bs-toggle="modal" data-bs-target="#downloadModal">
+                    🔄 Обновить данные
+                </button>
+                #}
+            </div>
+            <div class="last-update" style="line-height: normal;">
+                Обновлено: <strong>{{ last_updated }}</strong>
+            </div>
+        </div>
+
+        {#
+        <!-- Modal -->
+        <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="downloadModalLabel">Как помочь обновить данные?</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Чтобы данные на сайте были актуальными и часто обновлялись, нужна помощь участников клана.
+                        </p>
+
+                        <div class="alert alert-danger py-2">
+                            <strong>Важно!</strong> Способ доступен только для Windows.
+                        </div>
+
+                        <h6 class="fw-bold">1. Установка и запуск утилиты (Только Windows 🖥️)</h6>
+                        <ol class="small mb-3">
+                            <li>Скачайте архив по кнопке ниже.</li>
+                            <li><strong>Распакуйте его</strong> в удобное место (важно!).</li>
+                            <li>Запустите <code>PW_Requiem_history.exe</code>.</li>
+                            <li>Утилита найдет папку игры (или попросит указать её).</li>
+                            <li>В трее (возле часов) появится иконка. Там можно включить/отключить автозапуск вместе с
+                                включением ПК.</li>
+                        </ol>
+
+                        <div class="alert alert-info py-2 small">
+                            <i class="bi bi-info-circle-fill"></i> Программа работает в фоне. Просто запускайте её перед
+                            игрой (или настройте автозапуск).
+                        </div>
+
+                        <h6 class="fw-bold mt-3">2. Как отправить новые данные на сайт</h6>
+                        <ol class="small mb-3">
+                            <li>Зайдите в игру персонажем, состоящим в клане.</li>
+                            <li>Откройте окно <strong>Гильдии -> История гильдии</strong>.</li>
+                            <li>Пролистайте список событий вверх до момента, когда событиям будет <strong>24+ часа
+                                </strong>.</li>
+                            <li>Закройте окно с историей гильдии.</li>
+                        </ol>
+
+                        <p class="small text-muted mb-3">
+                            ⏳ Данные на сайте обновятся в течение <strong>5-10 минут</strong>.
+                            Чтобы увидеть изменения, просто обновите страницу.
+                        </p>
+
+
+                        <div class="alert alert-warning py-2" style="font-size: 0.85rem;">
+                            <i class="bi bi-shield-exclamation"></i> <strong>Важно:</strong> Браузер может ругаться на
+                            "редкий файл". Это нормально. Нажмите "Сохранить всё равно" / "Подробнее" -> "Выполнить".
+                        </div>
+                        <hr>
+                        <div class="d-grid gap-2">
+                            <a href="/download/watcher" class="btn btn-success btn-lg">📥 Скачать файл (ZIP)</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        #}
+
+        <!-- Edit Player Modal -->
+        <div class="modal fade" id="editPlayerModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">✏️ Редактировать игрока</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editRoleId">
+                        <div class="mb-3">
+                            <label class="form-label">ID игрока:</label>
+                            <input type="text" class="form-control" id="displayRoleId" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNickname" class="form-label">Никнейм:</label>
+                            <input type="text" class="form-control" id="editNickname" placeholder="Введите никнейм">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editClass" class="form-label">Класс (профессия):</label>
+                            <select class="form-select" id="editClass">
+                                <option value="-1">Не указан</option>
+                                {% for cid, cdata in CLASSES.items() %}
+                                <option value="{{ cid }}">{{ cdata[1] }} {{ cdata[0] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="alert alert-info py-2 small" id="saveStatus" style="display: none;"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="savePlayerData()">💾 Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-card">
+            <div class="btn-group w-100 mb-2">
+                <button type="button" class="btn btn-outline-success btn-preset" onclick="setRange('today')">📅
+                    Сегодня</button>
+                <button type="button" class="btn btn-outline-primary btn-preset" onclick="setRange('monday')">С
+                    Понедельника</button>
+                <button type="button" class="btn btn-outline-secondary btn-preset" onclick="setRange('prev_week')">Пред.
+                    неделя</button>
+            </div>
+
+            <!-- Class Filter Dropdown -->
+            <div class="dropdown mb-2">
+                <button
+                    class="btn btn-sm btn-outline-secondary w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span>🧙 Фильтр по классам</span>
+                    <span class="badge bg-secondary ms-2" id="selectedCount"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-custom w-100 p-2">
+                    <li class="mb-2">
+                        <div class="btn-group w-100 btn-group-sm">
+                            <button type="button" class="btn btn-outline-success"
+                                onclick="toggleAllClasses(true)">Все</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="toggleAllClasses(false)">Ни
+                                одного</button>
+                        </div>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% for cls in all_classes %}
+                    <li>
+                        <div class="form-check p-2 rounded hover-bg">
+                            <input class="form-check-input class-checkbox" type="checkbox" value="{{ cls.id }}"
+                                id="cls_{{ cls.id }}" {% if cls.selected %}checked{% endif %}>
+                            <label class="form-check-label" for="cls_{{ cls.id }}">
+                                <img src="{{ cls.icon }}" width="20" height="20" class="me-2"> {{ cls.name }}
+                            </label>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><button type="button" class="btn btn-primary btn-sm w-100"
+                            onclick="applyFilter()">Применить</button></li>
+                </ul>
+            </div>
+            <div class="row g-1">
+                <div class="col-5"><input type="date" id="startDate" class="form-control form-control-sm"
+                        value="{{ current_start }}"></div>
+                <div class="col-5"><input type="date" id="endDate" class="form-control form-control-sm"
+                        value="{{ current_end }}"></div>
+                <div class="col-2"><button onclick="applyFilter()" class="btn btn-primary btn-sm w-100">🔎</button>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="kh-tab" data-bs-toggle="tab" data-bs-target="#kh-pane"
+                    type="button">🏰 КХ Этапы</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="money-tab" data-bs-toggle="tab" data-bs-target="#money-pane"
+                    type="button">💰 Вклады</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane"
+                    type="button">📜 История</button>
+            </li>
+        </ul>
+
+        <div class="tab-content table-card" id="myTabContent">
+
+            <div class="tab-pane fade show active" id="kh-pane" role="tabpanel">
+                <div class="table-responsive">
+                    <table id="khTable" class="table table-bordered mb-0" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">Имя</th>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                                <th>6</th>
+                                <th>7</th>
+                                <th>💃</th>
+                                <th>🧙</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr>
+                                <td style="font-weight: 500; white-space: nowrap;">
+                                    {% if row.class_icon %}<img src="{{ row.class_icon }}" class="class-icon"
+                                        title="{{ row.class_name }}" alt="{{ row.class_name }}">{% endif %}{{ row.name
+                                    }}
+                                </td>
+                                <td class="stage-cell {% if row.s1 > 0 %}done{% endif %}">{{ row.s1 if row.s1 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s2 > 0 %}done{% endif %}">{{ row.s2 if row.s2 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s3 > 0 %}done{% endif %}">{{ row.s3 if row.s3 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s4 > 0 %}done{% endif %}">{{ row.s4 if row.s4 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s5 > 0 %}done{% endif %}">{{ row.s5 if row.s5 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s6 > 0 %}done{% endif %}">{{ row.s6 if row.s6 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.s7 > 0 %}done{% endif %}">{{ row.s7 if row.s7 > 0 else
+                                    '·' }}</td>
+                                <td class="stage-cell {% if row.dances > 0 %}dance{% endif %}">{{ row.dances if
+                                    row.dances > 0 else '·' }}</td>
+                                <td class="stage-cell {% if row.adepts > 0 %}adept{% endif %}">{{ row.adepts if
+                                    row.adepts > 0 else '·' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="money-pane" role="tabpanel">
+                <div class="table-responsive">
+                    <table id="moneyTable" class="table table-striped mb-0" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">Имя</th>
+                                <th>Золото 💰</th>
+                                <th>Доблесть 🛡️</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr>
+                                <td style="white-space: nowrap;">{% if row.class_icon %}<img src="{{ row.class_icon }}"
+                                        class="class-icon" title="{{ row.class_name }}" alt="{{ row.class_name }}">{%
+                                    endif %}{{ row.name }}</td>
+                                <td>{{ row.total_gold }}</td>
+                                <td>{{ row.total_valor }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold; background: #eee;">
+                                <td>ИТОГО:</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="history-pane" role="tabpanel">
+                <div class="table-responsive">
+                    <table id="historyTable" class="table table-striped mb-0" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>ID</th>
+                                <th>Игрок</th>
+                                <th>Событие</th>
+                                <th style="width: 60px;">✏️</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in history_rows %}
+                            <tr>
+                                <td>{{ row[0] }}</td>
+                                <td style="font-family: monospace; color: #666;">{{ row[6] }}</td>
+                                <td style="white-space: nowrap;">
+                                    {% if row[2] %}<img src="{{ row[2] }}" class="class-icon" title="{{ row[3] }}"
+                                        alt="{{ row[3] }}">{% endif %}
+                                    <span data-role-id="{{ row[6] }}">{{ row[1] }}</span>
+                                </td>
+                                <td class="type-{{ row[5] }}">{{ row[4] }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary edit-player-btn"
+                                        data-role-id="{{ row[6] }}" data-name="{{ row[1] }}"
+                                        data-class-icon="{{ row[2] }}" title="Редактировать игрока">✏️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+
+    <script>
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+
+        function formatDate(date) {
+            let year = date.getFullYear();
+            let month = ('0' + (date.getMonth() + 1)).slice(-2);
+            let day = ('0' + date.getDate()).slice(-2);
+            return `${year}-${month}-${day}`;
+        }
+
+        function setRange(type) {
+            const today = new Date();
+            let start = new Date();
+            let end = new Date();
+
+            if (type === 'today') {
+                // Сегодняшний день - начало и конец совпадают
+                start = new Date();
+                end = new Date();
+            }
+            else if (type === 'monday') {
+                const day = today.getDay();
+                const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                start.setDate(diff);
+            }
+            else if (type === 'prev_week') {
+                const day = today.getDay();
+                const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                const currentMonday = new Date(today.setDate(diff));
+                end.setDate(currentMonday.getDate() - 1);
+                start.setDate(end.getDate() - 6);
+            }
+
+            document.getElementById('endDate').value = formatDate(end);
+            document.getElementById('startDate').value = formatDate(start);
+            applyFilter();
+        }
+
+        function toggleAllClasses(state) {
+            $('.class-checkbox').prop('checked', state);
+        }
+
+        function applyFilter() {
+            let start = document.getElementById('startDate').value;
+            let end = document.getElementById('endDate').value;
+
+            // Collect classes
+            let classes = [];
+            $('.class-checkbox:checked').each(function () {
+                classes.push($(this).val());
+            });
+
+            // Build URL
+            let url = `/?start=${start}&end=${end}`;
+            classes.forEach(cid => {
+                url += `&classes=${cid}`;
+            });
+
+            // Save active tab before reloading
+            const activeTab = $('#myTab .nav-link.active').attr('id');
+            if (activeTab) {
+                localStorage.setItem('activeTab', activeTab);
+            }
+
+            if (window.Telegram.WebApp.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            window.location.href = url;
+        }
+
+        $(document).ready(function () {
+            // Restore active tab
+            const activeTabId = localStorage.getItem('activeTab');
+            if (activeTabId) {
+                const tabButton = document.querySelector(`#${activeTabId}`);
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
+                }
+            }
+
+            // Update selected count
+            let count = $('.class-checkbox:checked').length;
+            if (count > 0 && count < $('.class-checkbox').length) {
+                $('#selectedCount').text(count);
+            }
+
+            // Prevent dropdown close inside
+            $('.dropdown-menu').on('click', function (e) {
+                e.stopPropagation();
+            });
+
+            // Инициализация таблицы КХ
+            $('#khTable').DataTable({
+                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ru.json" },
+                "paging": false, "info": false, "searching": true,
+                "fixedHeader": true,
+                "columnDefs": [{ "orderable": false, "targets": [1, 2, 3, 4, 5, 6, 7, 8, 9] }]
+            });
+
+            // Инициализация таблицы Вкладов
+            $('#moneyTable').DataTable({
+                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ru.json" },
+                "paging": false, "info": false, "searching": true,
+                "order": [[1, "desc"]],
+                "fixedHeader": true,
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+                    var intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
+
+                    totalGold = api.column(1, { page: 'current' }).data().reduce((a, b) => intVal(a) + intVal(b), 0);
+                    totalValor = api.column(2, { page: 'current' }).data().reduce((a, b) => intVal(a) + intVal(b), 0);
+
+                    $(api.column(1).footer()).html(totalGold);
+                    $(api.column(2).footer()).html(totalValor);
+                }
+            });
+
+            // Инициализация таблицы Истории
+            $('#historyTable').DataTable({
+                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ru.json" },
+                "paging": false, "info": false, "searching": true,
+                "ordering": false,
+                "fixedHeader": true
+            });
+
+            // Исправление бага с заголовками при переключении вкладок
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                // Сохраняем активную вкладку
+                localStorage.setItem('activeTab', e.target.id);
+
+                // Пересчитываем размеры таблиц
+                $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+                // Принудительно вызываем событие resize, чтобы FixedHeader обновился
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
+
+        // Маппинг icon URL -> class_id
+        const classIconMap = {
+            {% for cid, cdata in CLASSES.items() %}
+        "/icons/{{ cid }}.png": { { cid } },
+        {% endfor %}
+        };
+
+        // Функция открытия модального окна редактирования
+        $(document).on('click', '.edit-player-btn', function (e) {
+            e.preventDefault();
+            console.log('Edit button clicked!'); // Для отладки
+
+            const roleId = $(this).data('role-id');
+            const currentName = $(this).data('name');
+            const classIcon = $(this).data('class-icon');
+
+            console.log('Role ID:', roleId, 'Name:', currentName, 'Icon:', classIcon);
+
+            // Извлекаем текущий class_id из icon URL
+            const currentClassId = classIconMap[classIcon] || -1;
+
+            // Устанавливаем значения в форму
+            $('#editRoleId').val(roleId);
+            $('#displayRoleId').val(roleId);
+
+            // Убираем префикс "ID " если есть
+            const nickname = currentName.startsWith('ID ') ? '' : currentName;
+            $('#editNickname').val(nickname);
+            $('#editClass').val(currentClassId);
+
+            // Скрываем статус
+            $('#saveStatus').hide();
+
+            // Открываем модалку
+            new bootstrap.Modal($('#editPlayerModal')[0]).show();
+        });
+
+        // Функция сохранения данных
+        async function savePlayerData() {
+            const roleId = $('#editRoleId').val();
+            const nickname = $('#editNickname').val().trim();
+            const classId = parseInt($('#editClass').val());
+
+            const statusDiv = $('#saveStatus');
+            statusDiv.show();
+            statusDiv.removeClass().addClass('alert alert-info py-2 small');
+            statusDiv.text('💾 Сохранение...');
+
+            try {
+                // Обновляем никнейм
+                const nicknameResponse = await fetch('/api/update_nickname', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role_id: roleId, nickname: nickname })
+                });
+                const nicknameResult = await nicknameResponse.json();
+
+                if (nicknameResult.status !== 'ok') {
+                    throw new Error(nicknameResult.message);
+                }
+
+                // Обновляем класс
+                const classResponse = await fetch('/api/update_class', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role_id: roleId, class_id: classId })
+                });
+                const classResult = await classResponse.json();
+
+                if (classResult.status !== 'ok') {
+                    throw new Error(classResult.message);
+                }
+
+                // Успех!
+                statusDiv.removeClass().addClass('alert alert-success py-2 small');
+                statusDiv.text('✅ Данные успешно сохранены! Перезагружаем страницу...');
+
+                // Перезагружаем страницу через 1 сек
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+            } catch (error) {
+                statusDiv.removeClass().addClass('alert alert-danger py-2 small');
+                statusDiv.text('❌ Ошибка: ' + error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

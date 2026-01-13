@@ -1,0 +1,10 @@
+aiogram
+fastapi
+uvicorn
+jinja2
+python-dotenv
+aiosqlite
+python-multipart
+requests
+pystray
+Pillow
