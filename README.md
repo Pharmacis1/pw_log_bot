@@ -34,7 +34,7 @@ PW Log Bot helps track faction history in Perfect World by parsing local game lo
       ```ini
       BOT_TOKEN=your_telegram_bot_token
       WEB_PORT=8080
-      SERVER_URL=https://your-app-url.zrok.io
+      SITE_URL=https://your-app-url.zrok.io
       ZROK_SHARE_NAME=your_share_name
       ```
     - Ensure `watcher.ini` points to your Perfect World `FactionHistoryData` folder. The bot will try to create/read this on first run.

@@ -97,7 +97,7 @@ async def init_db():
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     # Вставь СЮДА свою ссылку от ngrok
-    WEB_APP_URL = os.getenv("WEB_APP_URL")
+    WEB_APP_URL = os.getenv("SITE_URL")
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📊 Открыть Архив (Mini App)", web_app=WebAppInfo(url=WEB_APP_URL))]

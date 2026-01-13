@@ -18,7 +18,7 @@ load_dotenv()
 # --- CONFIG ---
 TARGET_SUFFIX = os.path.join("element", "userdata", "FactionData", "FactionHistoryData")
 CONFIG_FILE = "watcher.ini"
-SERVER_URL = os.getenv("SERVER_URL", "https://requiem.share.zrok.io")
+SERVER_URL = os.getenv("SITE_URL", "https://requiem.share.zrok.io")
 CHECK_INTERVAL = 60
 APP_NAME = "PWLogWatcher"
 LOG_FILE = "watcher.log"
