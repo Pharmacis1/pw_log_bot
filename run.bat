@@ -2,18 +2,18 @@
 chcp 65001 >nul
 echo Starting PW Log Bot...
 
-echo 1. Launching Web App (Port 8000)...
-start "Web App" cmd /k "venv\Scripts\uvicorn web_app:app --host 0.0.0.0 --port 8080"
+echo Loading configuration from .env...
+for /f "usebackq tokens=1,* delims==" %%a in (".env") do set %%a=%%b
 
-echo 2. Launching Zrok Tunnel...
-start "Zrok Tunnel" cmd /k "zrok share reserved requiem --headless"
+echo 1. Launching Web App (Port %WEB_PORT%)...
+start "Web App" cmd /k "venv\Scripts\uvicorn web_app:app --host 0.0.0.0 --port %WEB_PORT%"
+
+echo 2. Launching Zrok Tunnel (%ZROK_SHARE_NAME%)...
+start "Zrok Tunnel" cmd /k "zrok share reserved %ZROK_SHARE_NAME% --headless"
 
 echo 3. Launching Telegram Bot...
 start "Telegram Bot" cmd /k "venv\Scripts\python bot.py"
 
 echo.
-echo !!! ВАЖНО !!!
-echo Если Cloudflare выдаст новую ссылку (например https://random-name.trycloudflare.com),
-echo скопируй её в файл .env и перезапусти бота!
-echo.
+echo Bot started!
 pause
